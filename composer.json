@@ -1,0 +1,35 @@
+{
+    "name": "bobkosse/data-compliance",
+    "description": "Easy to use data compliance solution for Laravel",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Bob Kosse",
+            "email": "bob@bobkosse.nl"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "orchestra/testbench": "^11.1",
+        "pestphp/pest": "^4.5"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Bobkosse\\DataCompliance\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
