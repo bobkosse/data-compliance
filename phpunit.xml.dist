@@ -13,4 +13,7 @@
             <directory suffix=".php">./tests</directory>
         </testsuite>
     </testsuites>
+    <php>
+        <env name="APP_KEY" value="base64:u6p8f6N6O87mO9D6S6T6U6V6W6X6Y6Z6a6b6c6d6e6f="/>
+    </php>
 </phpunit>

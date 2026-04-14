@@ -19,7 +19,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Bobkosse\\DataCompliance\\": "src/"
+            "BobKosse\\DataCompliance\\": "src/"
         }
     },
     "autoload-dev": {
