@@ -1,7 +1,7 @@
 # Data Compliance
 
-[![Main Branch Status](https://github.com)](https://github.com)
-[![Develop Branch Status](https://github.com/workflows/tests.yml/badge.svg?branch=develop)](https://github.com)
+[![Main Branch Status](https://github.com/bobkosse/data-compliance)](https://github.com)
+[![Develop Branch Status](https://github.com/bobkosse/data-compliance/workflows/tests.yml/badge.svg?branch=develop)](https://github.com)
 
 Laravel Shielded Privacy is a "Privacy by Design" toolkit that automatically secures sensitive user data through 
 transparent database encryption. By enforcing an "encrypted-by-default" policy, it ensures that Personally Identifiable 
