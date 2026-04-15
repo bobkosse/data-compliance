@@ -16,6 +16,7 @@
       <tool tool_name="Pest">
         <cache>
           <versions>
+            <info id="Local/Users/bobkosse/Herd/packages/data-compliance/vendor/bin/pest" version="4.4.4" />
             <info id="Local/vendor/bin/pest" version="4.4.4" />
           </versions>
         </cache>
