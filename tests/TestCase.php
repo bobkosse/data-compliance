@@ -2,7 +2,9 @@
 
 namespace Tests;
 
-abstract class TestCase extends \Orchestra\Testbench\TestCase
+use \Orchestra\Testbench\TestCase as OTestCase;
+
+abstract class TestCase extends OTestCase
 {
 
 }

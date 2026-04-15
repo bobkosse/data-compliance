@@ -4,6 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use BobKosse\DataCompliance\Traits\HasPrivacy;
 
 beforeEach(function () {
@@ -15,15 +16,50 @@ beforeEach(function () {
         $table->string('internal_note'); // Non-private field
         $table->timestamps();
     });
+
+    Schema::create('users', function (Blueprint $table) {
+        $table->id();
+        $table->string('username');
+        $table->string('email');
+        $table->timestamps();
+    });
 });
 
 class TestCustomer extends Model {
     use HasPrivacy;
 
     protected $table = 'test_customers';
-    protected $guarded = [];
+
+    protected $fillable = [
+        'name', 'email', 'address', 'internal_note'
+    ];
+
     protected $privacyFields = [
         'name', 'email', 'address'
+    ];
+}
+
+class User extends Model {
+    use HasPrivacy;
+
+    protected $table = 'users';
+
+    protected $fillable = [
+        'username', 'email'
+    ];
+
+    protected $privacyFields = [
+        'username', 'email'
+    ];
+}
+
+class NonModel {
+    use HasPrivacy;
+
+    public function __construct(public string $email) {}
+
+    protected $privacyFields = [
+        'email'
     ];
 }
 
@@ -103,4 +139,40 @@ it('shows encrypted data after set back to reveal false state', function () {
     expect($customer->email)->toBe('[ENCRYPTED]');
     expect($customer->address)->toBe('[ENCRYPTED]');
     expect($customer->internal_note)->toBe('This is a secret note');
+});
+
+it('should not be usable on the User model of Laravel', function () {
+    $user = User::create([
+        'username' => 'johndoe',
+        'email' => 'john@doe.com',
+    ]);
+
+    expect($user->username)->toBe('johndoe');
+    expect($user->email)->toBe('john@doe.com');
+
+    $user->revealPrivacy(true);
+
+    expect($user->username)->toBe('johndoe');
+    expect($user->email)->toBe('john@doe.com');
+});
+
+it('should only run on Laravel models', function () {
+    $nonModel = new NonModel('john@doe.com');
+    expect($nonModel->email)->toBe('john@doe.com');
+    $nonModel->revealPrivacy(true);
+    expect($nonModel->email)->toBe('john@doe.com');
+    $nonModel->revealPrivacy(false);
+    expect($nonModel->email)->toBe('john@doe.com');
+});
+
+it('should log an alert if HasPrivacy is used on User model', function () {
+    Log::shouldReceive('alert')
+        ->once()
+        ->with(Mockery::on(function ($message) {
+            return str_contains($message, 'Privacy is not active for this model');
+        }));
+
+    // Act
+    $model = new User();
+    $model->getAttribute('any_key');
 });

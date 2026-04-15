@@ -3,10 +3,21 @@
 namespace BobKosse\DataCompliance\Traits;
 
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 trait HasPrivacy
 {
     protected bool $revealed = false;
+
+    protected function isPrivacyActive(): bool
+    {
+        $privacyActive = $this instanceof Model && get_class($this) !== 'User';
+        if(!$privacyActive) {
+            Log::alert('Privacy is not active for this model');
+        }
+        return $privacyActive;
+    }
 
     public function revealPrivacy(bool $reveal = false): self
     {
@@ -16,14 +27,13 @@ trait HasPrivacy
 
     public function privacyFields(): array
     {
-        return [];
+        return $this->privacyFields ?? [];
     }
 
     public function getAttribute($key): mixed
     {
         $value = parent::getAttribute($key);
-
-        if (in_array($key, $this->privacyFields ?? [])) {
+        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields())) {
             if (!$this->revealed) {
                 return '[ENCRYPTED]';
             }
@@ -40,7 +50,7 @@ trait HasPrivacy
 
     public function setAttribute($key, $value): mixed
     {
-        if (in_array($key, $this->privacyFields ?? [])) {
+        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields ?? [])) {
             $value = Crypt::encryptString($value);
         }
         return parent::setAttribute($key, $value);
