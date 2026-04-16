@@ -17,10 +17,6 @@ class PrivacyAuditCommand extends Command
     {
         $scanPath = $this->resolveScanPath((string) $this->option('scan'));
 
-        if ($scanPath === null) {
-            return self::FAILURE;
-        }
-
         if (! File::isDirectory($scanPath)) {
             $this->error("Scan directory not found: {$scanPath}");
 
@@ -32,10 +28,6 @@ class PrivacyAuditCommand extends Command
 
         foreach ($files as $file) {
             $filePath = $this->resolveFilePath($file);
-
-            if ($filePath === null) {
-                continue;
-            }
 
             $relativePath = str_replace('\\', '/', $this->resolveRelativePath($scanPath, $filePath));
 
