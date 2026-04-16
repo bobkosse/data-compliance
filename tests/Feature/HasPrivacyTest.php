@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Crypt;
 use BobKosse\DataCompliance\Traits\HasPrivacy;
 
 beforeEach(function () {
@@ -175,4 +176,18 @@ it('should log an alert if HasPrivacy is used on User model', function () {
     // Act
     $model = new User();
     $model->getAttribute('any_key');
+});
+
+it('returns the raw value when decryption fails', function () {
+    Crypt::shouldReceive('decryptString')
+        ->once()
+        ->andThrow(new Exception('Decrypt failed'));
+
+    $model = new TestCustomer();
+    $model->setRawAttributes([
+        'email' => 'encrypted-value',
+    ]);
+    $model->revealPrivacy(true);
+
+    expect($model->getAttribute('email'))->toBe('encrypted-value');
 });

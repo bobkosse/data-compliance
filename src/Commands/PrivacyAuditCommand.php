@@ -10,7 +10,7 @@ use ReflectionClass;
 
 class PrivacyAuditCommand extends Command
 {
-    protected $signature = 'privacy:audit {--scan= : Directory to scan (absolute or relative to base_path())} {--include-vendor : Also scan the vendor directory when scanning the project root}';
+    protected $signature = 'privacy:audit {--scan= : Directory to scan (absolute or relative to base_path())}';
     protected $description = 'Overview of all Eloquent models and their privacy settings';
 
     public function handle(): int
@@ -38,10 +38,6 @@ class PrivacyAuditCommand extends Command
             }
 
             $relativePath = str_replace('\\', '/', $this->resolveRelativePath($scanPath, $filePath));
-
-            if (! (bool) $this->option('include-vendor') && str_starts_with($relativePath, 'vendor/')) {
-                continue;
-            }
 
             if (pathinfo($relativePath, PATHINFO_EXTENSION) !== 'php') {
                 continue;
