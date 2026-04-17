@@ -9,7 +9,7 @@ it('scans the directory and finds models and outputs the result', function () {
     $modelsDir = __DIR__ . '/../MockModels';
 
     $this->artisan('privacy:audit', [
-        '--scan' => $modelsDir,
+        'scan' => $modelsDir,
     ])
         ->expectsTable(['Model', 'Has Privacy Trait', 'Privacy Fields'], [
             ['Tests\MockModels\ProtectedModel', 'Yes', 'email, phone'],
@@ -22,7 +22,7 @@ it('should give a clear message if the path is not correct ', function () {
     $modelsDir = __DIR__ . '/../NonModels';
 
     $this->artisan('privacy:audit', [
-        '--scan' => $modelsDir,
+        'scan' => $modelsDir,
     ])
         ->expectsOutput('Scan directory not found: ' . $modelsDir)
         ->assertExitCode(1);
@@ -35,7 +35,7 @@ it('skips files that are not php files', function () {
     File::put($tempDir . '/README.md', '# not a php file');
 
     $this->artisan('privacy:audit', [
-        '--scan' => $tempDir,
+        'scan' => $tempDir,
     ])
         ->expectsOutput('No Eloquent models found in the selected scan directory.')
         ->assertExitCode(0);
@@ -49,7 +49,7 @@ it('skips php files without a class', function () {
     File::put($tempDir . '/NoClass.php', "<?php\n\nnamespace Tests\\Tmp;\n");
 
     $this->artisan('privacy:audit', [
-        '--scan' => $tempDir,
+        'scan' => $tempDir,
     ])
         ->expectsOutput('No Eloquent models found in the selected scan directory.')
         ->assertExitCode(0);
@@ -72,7 +72,7 @@ class GhostModel
 PHP);
 
     $this->artisan('privacy:audit', [
-        '--scan' => $tempDir,
+        'scan' => $tempDir,
     ])
         ->expectsOutput('No Eloquent models found in the selected scan directory.')
         ->assertExitCode(0);
@@ -99,7 +99,7 @@ PHP);
     require_once $filePath;
 
     $this->artisan('privacy:audit', [
-        '--scan' => $tempDir,
+        'scan' => $tempDir,
     ])
         ->expectsOutput('No Eloquent models found in the selected scan directory.')
         ->assertExitCode(0);
@@ -254,4 +254,12 @@ it('returns null when no class name token is found', function () {
     ];
 
     expect($command->publicParseClassName($tokens, 0))->toBeNull();
+});
+
+it('returns a proper error message when no scan directory is specified', function () {
+    $this->artisan('privacy:audit', [])
+        ->expectsOutput('Scan directory not specified. Use:')
+        ->expectsOutput('php artisan privacy:audit app/Models')
+        ->expectsOutput('to scan the app/Models directory.')
+        ->assertExitCode(1);
 });

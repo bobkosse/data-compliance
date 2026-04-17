@@ -1,67 +1,68 @@
-# Data Compliance
+# Laravel Data Compliance (Privacy Trait & Audit)
+This package provides a lightweight solution for handling sensitive data within Laravel Eloquent models. It allows you to automatically encrypt and decrypt specific fields and includes an audit tool to monitor privacy compliance across your application.
 
-Main: ![Main status](https://github.com/bobkosse/data-compliance/actions/workflows/tests.yml/badge.svg?branch=main)
-
-Devlop: ![Develop status](https://github.com/bobkosse/data-compliance/actions/workflows/tests.yml/badge.svg?branch=develop)
-
-Laravel Shielded Privacy is a "Privacy by Design" toolkit that automatically secures sensitive user data through 
-transparent database encryption. By enforcing an "encrypted-by-default" policy, it ensures that Personally Identifiable 
-Information (PII) remains inaccessible to unauthorized users and logs, while providing seamless utilities for GDPR 
-compliance, such as automated data portability exports and secure data anonymization.
+## Features
+- **Automatic Encryption:** Automatically encrypts sensitive data when saving to the database.
+- **On-the-fly Decryption:** Decrypts data automatically when accessing model attributes.
+- **Privacy Masking:** By default, encrypted fields return ```[ENCRYPTED]``` unless explicitly "revealed."
+- **Privacy Audit:** A built-in CLI tool to scan your models and verify which fields are protected.
 
 ## Installation
-
-Install the package via composer: 
-``` 
-composer require bobkosse/data-compliance
-```
+1. Add the trait to your project (ensure it is placed in the ```BobKosse\DataCompliance\Traits``` namespace).
+2. Register the ```PrivacyAuditCommand``` in your ```app/Console/Kernel.php``` if not automatically discovered.
 
 ## Usage
-
-Add the trait to your model and specify the fields that should be anonymized:
+### 1. Preparing your Models
+Add the ```HasPrivacy``` trait to any Eloquent model containing sensitive data. Define which fields should be encrypted by adding a ```$privacyFields``` array.
 
 ```php
 use BobKosse\DataCompliance\Traits\HasPrivacy;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Model
+class PatientProfile extends Model
 {
-    use HasPrivacy;
-    
-    protected $privacyFields = [
-        'name',
-        'email',
-    ];
+  use HasPrivacy;
+
+  protected $privacyFields = [
+    'phone_number',
+    'address',
+    'social_security_number'
+  ];
 }
 ```
-The trait will automatically encrypt and hash the specified fields when saving the model. Default encrypted fields will
-be filled with `[ENCRYPED]` when requested. To reveal the original values use the `revealPrivacy()` method.
 
-## Example
-An example of using the trait to anonymize a user's personal data:
+### 2. How it works
+- **Saving Data:** When you set a value for a field defined in ```$privacyFields```, the trait automatically encrypts it using Laravel's ```Crypt``` facade before it hits the database.
+- **Accessing Data:** By default, accessing these fields will return the string ```[ENCRYPTED]```. This prevents accidental leaking of sensitive data in logs, API responses, or views.
+- **Revealing Data:** To access the actual decrypted value, you must explicitly call the revealPrivacy() method.
 
 ```php
-$user = User::create([
-    'name' => 'John Doe',
-    'email' => 'john@doe.com',
-]);
+$profile = PatientProfile::find(1);
 
-var_dump($user->toArray());
-/**
- * This will return:
- * [
- *      'name' => '[ENCRYPTED]',
- *      'email' => '[ENCRYPTED]',
- *  ]
- */
- 
-$user->revealPrivacy(true);
-var_dump($user->toArray());
-/**
- * This will return:
- * [
- *      'name' => 'John Doe',
- *      'email' => 'hashed_email',
- *  ]
- */
+// Returns "[ENCRYPTED]"
+echo $profile->phone_number;
+
+// Returns the decrypted value (e.g., "+31 6 12345678")
+$profile->revealPrivacy(true);
+echo $profile->phone_number;
 ```
 
+This can also be used in combination with authorization policies to ensure sensitive data is only accessible by authorized users.
+
+## Privacy Audit Command
+The package includes a console command to give you an overview of your data compliance status. It scans a directory for Eloquent models and reports which ones are using the privacy trait.
+
+### Run the audit:
+```bash
+php artisan privacy:audit app/Models
+```
+
+### Output:
+The command will display a table showing:
+- **Model:** The full class name of the model.
+- **Has Privacy Trait:** A green "Yes" or red "No" indicating if the trait is implemented.
+- **Privacy Fields:** A list of the fields currently being encrypted.
+
+## Important Notes
+- **User Model:** The trait contains a safety check (```isPrivacyActive```) that prevents it from running on the default ```User``` class to avoid locking users out of their accounts if email/password fields are accidentally encrypted.
+- **Database Requirements:** Ensure the database columns for privacy fields are large enough to hold encrypted strings (typically ```TEXT``` or ```BLOB```).

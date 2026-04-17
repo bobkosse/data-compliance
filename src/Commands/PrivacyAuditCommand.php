@@ -10,12 +10,21 @@ use ReflectionClass;
 
 class PrivacyAuditCommand extends Command
 {
-    protected $signature = 'privacy:audit {--scan= : Directory to scan (absolute or relative to base_path())}';
+    protected $signature = 'privacy:audit {scan?}';
     protected $description = 'Overview of all Eloquent models and their privacy settings';
 
     public function handle(): int
     {
-        $scanPath = $this->resolveScanPath((string) $this->option('scan'));
+        $scan = $this->argument('scan');
+
+        if (empty($scan)) {
+            $this->error('Scan directory not specified. Use:');
+            $this->error('php artisan privacy:audit app/Models');
+            $this->error('to scan the app/Models directory.');
+            return self::FAILURE;
+        }
+
+        $scanPath = $this->resolveScanPath((string) $scan);
 
         if (! File::isDirectory($scanPath)) {
             $this->error("Scan directory not found: {$scanPath}");
