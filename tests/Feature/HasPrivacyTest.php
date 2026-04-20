@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Crypt;
-use BobKosse\DataCompliance\Traits\HasPrivacy;
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 
 beforeEach(function () {
     Schema::create('test_customers', function (Blueprint $table) {

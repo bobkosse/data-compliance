@@ -1,8 +1,8 @@
 <?php
 
-namespace BobKosse\DataCompliance\Commands;
+namespace BobKosse\DataSecurity\Commands;
 
-use BobKosse\DataCompliance\Traits\HasPrivacy;
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Support\Facades\File;
-use BobKosse\DataCompliance\Commands\PrivacyAuditCommand;
+use BobKosse\DataSecurity\Commands\PrivacyAuditCommand;
 
 it('scans the directory and finds models and outputs the result', function () {
     $modelsDir = __DIR__ . '/../MockModels';

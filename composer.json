@@ -1,6 +1,6 @@
 {
-    "name": "bobkosse/data-compliance",
-    "description": "Easy to use data compliance solution for Laravel",
+    "name": "bobkosse/data-security",
+    "description": "Easy to use data security solution for Laravel",
     "type": "library",
     "authors": [
         {
@@ -19,7 +19,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "BobKosse\\DataCompliance\\": "src/"
+            "BobKosse\\DataSecurity\\": "src/"
         }
     },
     "autoload-dev": {
@@ -35,7 +35,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "BobKosse\\DataCompliance\\DataComplianceServiceProvider"
+                "BobKosse\\DataSecurity\\DataSecurityServiceProvider"
             ]
         }
     }

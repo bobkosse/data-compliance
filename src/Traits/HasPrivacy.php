@@ -1,6 +1,6 @@
 <?php
 
-namespace BobKosse\DataCompliance\Traits;
+namespace BobKosse\DataSecurity\Traits;
 
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Database\Eloquent\Model;
