@@ -1,11 +1,11 @@
 <?php
 
-namespace BobKosse\DataCompliance;
+namespace BobKosse\DataSecurity;
 
-use BobKosse\DataCompliance\Commands\PrivacyAuditCommand;
+use BobKosse\DataSecurity\Commands\PrivacyAuditCommand;
 use Illuminate\Support\ServiceProvider;
 
-class DataComplianceServiceProvider extends ServiceProvider
+class DataSecurityServiceProvider extends ServiceProvider
 {
     public function boot(): void {
         $this->commands([

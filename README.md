@@ -1,5 +1,7 @@
-# Laravel Data Compliance (Privacy Trait & Audit)
-This package provides a lightweight solution for handling sensitive data within Laravel Eloquent models. It allows you to automatically encrypt and decrypt specific fields and includes an audit tool to monitor privacy compliance across your application.
+# Laravel Data Security (Privacy Trait & Audit)
+This package provides a lightweight solution for handling sensitive data within Laravel Eloquent models. It allows you 
+to automatically encrypt and decrypt specific fields and includes an audit tool to monitor privacy security across your 
+application.
 
 ## Features
 - **Automatic Encryption:** Automatically encrypts sensitive data when saving to the database.
@@ -8,7 +10,7 @@ This package provides a lightweight solution for handling sensitive data within 
 - **Privacy Audit:** A built-in CLI tool to scan your models and verify which fields are protected.
 
 ## Installation
-1. Add the trait to your project (ensure it is placed in the ```BobKosse\DataCompliance\Traits``` namespace).
+1. Add the trait to your project (ensure it is placed in the ```BobKosse\DataSecurity\Traits``` namespace).
 2. Register the ```PrivacyAuditCommand``` in your ```app/Console/Kernel.php``` if not automatically discovered.
 
 ## Usage
@@ -16,7 +18,7 @@ This package provides a lightweight solution for handling sensitive data within 
 Add the ```HasPrivacy``` trait to any Eloquent model containing sensitive data. Define which fields should be encrypted by adding a ```$privacyFields``` array.
 
 ```php
-use BobKosse\DataCompliance\Traits\HasPrivacy;
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Database\Eloquent\Model;
 
 class PatientProfile extends Model
@@ -47,10 +49,12 @@ $profile->revealPrivacy(true);
 echo $profile->phone_number;
 ```
 
-This can also be used in combination with authorization policies to ensure sensitive data is only accessible by authorized users.
+This can also be used in combination with authorization policies to ensure sensitive data is only accessible by 
+authorized users.
 
 ## Privacy Audit Command
-The package includes a console command to give you an overview of your data compliance status. It scans a directory for Eloquent models and reports which ones are using the privacy trait.
+The package includes a console command to give you an overview of your data security status. It scans a directory for 
+Eloquent models and reports which ones are using the privacy trait.
 
 ### Run the audit:
 ```bash

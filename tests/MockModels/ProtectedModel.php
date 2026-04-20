@@ -2,7 +2,7 @@
 
 namespace Tests\MockModels;
 
-use BobKosse\DataCompliance\Traits\HasPrivacy;
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Database\Eloquent\Model;
 
 class ProtectedModel extends Model {
