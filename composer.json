@@ -1,5 +1,5 @@
 {
-    "name": "bobkosse/data-security",
+    "name": "bobkosse/laravel-data-security",
     "description": "Easy to use data security solution for Laravel",
     "type": "library",
     "authors": [
