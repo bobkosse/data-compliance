@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BobKosse\DataSecurity\Traits;
 
 use Illuminate\Support\Facades\Crypt;
