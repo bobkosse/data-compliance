@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Crypt;
-use BobKosse\DataSecurity\Traits\HasPrivacy;
+use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
     Schema::create('test_customers', function (Blueprint $table) {
@@ -28,41 +28,44 @@ beforeEach(function () {
     });
 });
 
-class TestCustomer extends Model {
+class TestCustomer extends Model
+{
     use HasPrivacy;
 
     protected $table = 'test_customers';
 
     protected $fillable = [
-        'name', 'email', 'address', 'internal_note'
+        'name', 'email', 'address', 'internal_note',
     ];
 
     protected $privacyFields = [
-        'name', 'email', 'address'
+        'name', 'email', 'address',
     ];
 }
 
-class User extends Model {
+class User extends Model
+{
     use HasPrivacy;
 
     protected $table = 'users';
 
     protected $fillable = [
-        'username', 'email'
+        'username', 'email',
     ];
 
     protected $privacyFields = [
-        'username', 'email'
+        'username', 'email',
     ];
 }
 
-class NonModel {
+class NonModel
+{
     use HasPrivacy;
 
     public function __construct(public string $email) {}
 
     protected $privacyFields = [
-        'email'
+        'email',
     ];
 }
 
@@ -176,7 +179,7 @@ it('should log an alert if HasPrivacy is used on User model', function () {
         }));
 
     // Act
-    $model = new User();
+    $model = new User;
     $model->getAttribute('any_key');
 });
 
@@ -185,7 +188,7 @@ it('returns the raw value when decryption fails', function () {
         ->once()
         ->andThrow(new Exception('Decrypt failed'));
 
-    $model = new TestCustomer();
+    $model = new TestCustomer;
     $model->setRawAttributes([
         'email' => 'encrypted-value',
     ]);
