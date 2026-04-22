@@ -386,3 +386,16 @@ it('handles mixed private and public fields correctly in one update', function (
     expect($rawDbData->internal_note)->toBe('Not a secret note');
     expect($rawDbData->email)->not->toBe('b@b.com');
 });
+
+it('keeps null privacy values as null without encrypting them', function () {
+    $customer = new TestCustomer;
+
+    $customer->setAttribute('email', '');
+
+    expect($customer->getRawOriginal('email'))->toBeNull();
+    expect($customer->getAttribute('email'))->toBe('[ENCRYPTED]');
+
+    $customer->revealPrivacy(true);
+
+    expect($customer->getAttribute('email'))->toBe('');
+});

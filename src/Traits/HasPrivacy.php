@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BobKosse\DataSecurity\Traits;
 
 use BobKosse\DataSecurity\Builders\PrivacyEloquentBuilder;
+use BobKosse\DataSecurity\Helpers\IsEncrypted;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -12,28 +13,12 @@ use Illuminate\Support\Facades\Log;
 
 trait HasPrivacy
 {
+    use IsEncrypted;
+
     /**
      * Indicates whether privacy is revealed for the model.
      */
     protected bool $revealed = false;
-
-    /**
-     * Determine whether a value is already encrypted.
-     */
-    protected function isAlreadyEncrypted(mixed $value): bool
-    {
-        if (! is_string($value) || $value === '') {
-            return false;
-        }
-
-        try {
-            Crypt::decryptString($value);
-
-            return true;
-        } catch (\Throwable) {
-            return false;
-        }
-    }
 
     /**
      * Boot method for HasPrivacy trait.
