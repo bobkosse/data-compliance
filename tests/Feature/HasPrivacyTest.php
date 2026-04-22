@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-
+use BobKosse\DataSecurity\Exceptions\PrivacyDecryptionException;
 use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -242,7 +242,7 @@ it('encrypts sensitive data when using upsert', function () {
     expect($rawDbData->internal_note)->toBe('This is a secret note');
 });
 
-it('returns the raw value when decryption fails', function () {
+it('throws a PrivacyDecryptionException when decryption fails', function () {
     Crypt::shouldReceive('decryptString')
         ->once()
         ->andThrow(new Exception('Decrypt failed'));
@@ -253,9 +253,22 @@ it('returns the raw value when decryption fails', function () {
     ]);
     $model->revealPrivacy(true);
 
-    expect($model->getAttribute('email'))->toBe('encrypted-value');
-});
+    $model->getAttribute('email');
+})->throws(PrivacyDecryptionException::class);
 
+it('returns null for null privacy values without decrypting them', function () {
+    $model = new TestCustomer;
+
+    $model->setRawAttributes([
+        'email' => null,
+    ]);
+
+    expect($model->getAttribute('email'))->toBeNull();
+
+    $model->revealPrivacy(true);
+
+    expect($model->getAttribute('email'))->toBeNull();
+});
 it('encrypts sensitive data when using insert via the model builder', function () {
     TestCustomer::insert([
         [

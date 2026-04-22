@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace BobKosse\DataSecurity\Traits;
 
 use BobKosse\DataSecurity\Builders\PrivacyEloquentBuilder;
+use BobKosse\DataSecurity\Exceptions\PrivacyDecryptionException;
 use BobKosse\DataSecurity\Helpers\IsEncrypted;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -78,14 +79,18 @@ trait HasPrivacy
         $value = parent::getAttribute($key);
 
         if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
+            if ($value === null) {
+                return null;
+            }
+
             if (! $this->revealed) {
                 return '[ENCRYPTED]';
             }
 
             try {
                 return Crypt::decryptString((string) $value);
-            } catch (\Exception $e) {
-                return $value;
+            } catch (\Throwable $e) {
+                throw PrivacyDecryptionException::forAttribute($key, static::class, $e);
             }
         }
 
