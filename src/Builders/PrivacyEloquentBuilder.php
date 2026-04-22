@@ -24,6 +24,11 @@ class PrivacyEloquentBuilder extends Builder
         return parent::upsert($this->encryptPrivacyPayloads($values), $uniqueBy, $update);
     }
 
+    public function update(array $values): int
+    {
+        return parent::update($this->encryptPrivacyPayload($values));
+    }
+
     /**
      * @param  array<int, array<string, mixed>>  $values
      * @return array<int, array<string, mixed>>
@@ -44,11 +49,32 @@ class PrivacyEloquentBuilder extends Builder
         $model = $this->getModel();
 
         foreach ($model->privacyFields() as $field) {
-            if (array_key_exists($field, $values) && $values[$field] !== null) {
-                $values[$field] = Crypt::encryptString((string) $values[$field]);
+            if (! array_key_exists($field, $values) || $values[$field] === null) {
+                continue;
             }
+
+            if ($this->isAlreadyEncrypted($values[$field])) {
+                continue;
+            }
+
+            $values[$field] = Crypt::encryptString((string) $values[$field]);
         }
 
         return $values;
+    }
+
+    protected function isAlreadyEncrypted(mixed $value): bool
+    {
+        if (! is_string($value) || $value === '') {
+            return false;
+        }
+
+        try {
+            Crypt::decryptString($value);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

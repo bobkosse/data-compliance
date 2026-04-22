@@ -18,6 +18,24 @@ trait HasPrivacy
     protected bool $revealed = false;
 
     /**
+     * Determine whether a value is already encrypted.
+     */
+    protected function isAlreadyEncrypted(mixed $value): bool
+    {
+        if (! is_string($value) || $value === '') {
+            return false;
+        }
+
+        try {
+            Crypt::decryptString($value);
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    /**
      * Boot method for HasPrivacy trait.
      */
     protected static function bootHasPrivacy(): void
@@ -95,7 +113,7 @@ trait HasPrivacy
     public function setAttribute($key, $value): mixed
     {
         if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
-            if ($value !== null) {
+            if ($value !== null && ! $this->isAlreadyEncrypted($value)) {
                 $value = Crypt::encryptString((string) $value);
             }
         }
