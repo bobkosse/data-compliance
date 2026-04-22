@@ -13,6 +13,7 @@ use ReflectionClass;
 class PrivacyAuditCommand extends Command
 {
     protected $signature = 'privacy:audit {scan?}';
+
     protected $description = 'Overview of all Eloquent models and their privacy settings';
 
     public function handle(): int
@@ -23,6 +24,7 @@ class PrivacyAuditCommand extends Command
             $this->error('Scan directory not specified. Use:');
             $this->error('php artisan privacy:audit app/Models');
             $this->error('to scan the app/Models directory.');
+
             return self::FAILURE;
         }
 
@@ -137,7 +139,7 @@ class PrivacyAuditCommand extends Command
 
     protected function resolveRelativePath(string $basePath, string $filePath): string
     {
-        $basePath = rtrim(str_replace('\\', '/', $basePath), '/') . '/';
+        $basePath = rtrim(str_replace('\\', '/', $basePath), '/').'/';
         $filePath = str_replace('\\', '/', $filePath);
 
         if (str_starts_with($filePath, $basePath)) {
@@ -182,7 +184,7 @@ class PrivacyAuditCommand extends Command
             return null;
         }
 
-        return $namespace !== '' ? $namespace . '\\' . $class : $class;
+        return $namespace !== '' ? $namespace.'\\'.$class : $class;
     }
 
     protected function parseNamespace(array $tokens, int $startIndex): string

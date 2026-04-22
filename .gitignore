@@ -7,3 +7,5 @@
 /vendor/
 *.swp
 *.swo
+/.phpunit.cache
+/--cache-result

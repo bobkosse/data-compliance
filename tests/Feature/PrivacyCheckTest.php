@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\File;
 use BobKosse\DataSecurity\Commands\PrivacyAuditCommand;
+use Illuminate\Support\Facades\File;
 
 it('scans the directory and finds models and outputs the result', function () {
-    $modelsDir = __DIR__ . '/../MockModels';
+    $modelsDir = __DIR__.'/../MockModels';
 
     $this->artisan('privacy:audit', [
         'scan' => $modelsDir,
@@ -21,20 +21,20 @@ it('scans the directory and finds models and outputs the result', function () {
 });
 
 it('should give a clear message if the path is not correct ', function () {
-    $modelsDir = __DIR__ . '/../NonModels';
+    $modelsDir = __DIR__.'/../NonModels';
 
     $this->artisan('privacy:audit', [
         'scan' => $modelsDir,
     ])
-        ->expectsOutput('Scan directory not found: ' . $modelsDir)
+        ->expectsOutput('Scan directory not found: '.$modelsDir)
         ->assertExitCode(1);
 });
 
 it('skips files that are not php files', function () {
-    $tempDir = __DIR__ . '/tmp-scan';
+    $tempDir = __DIR__.'/tmp-scan';
 
     File::ensureDirectoryExists($tempDir);
-    File::put($tempDir . '/README.md', '# not a php file');
+    File::put($tempDir.'/README.md', '# not a php file');
 
     $this->artisan('privacy:audit', [
         'scan' => $tempDir,
@@ -46,9 +46,9 @@ it('skips files that are not php files', function () {
 });
 
 it('skips php files without a class', function () {
-    $tempDir = __DIR__ . '/tmp-scan';
+    $tempDir = __DIR__.'/tmp-scan';
     File::ensureDirectoryExists($tempDir);
-    File::put($tempDir . '/NoClass.php', "<?php\n\nnamespace Tests\\Tmp;\n");
+    File::put($tempDir.'/NoClass.php', "<?php\n\nnamespace Tests\\Tmp;\n");
 
     $this->artisan('privacy:audit', [
         'scan' => $tempDir,
@@ -60,10 +60,10 @@ it('skips php files without a class', function () {
 });
 
 it('skips php files with a class that is not autoloadable', function () {
-    $tempDir = sys_get_temp_dir() . '/privacy-audit-' . uniqid();
+    $tempDir = sys_get_temp_dir().'/privacy-audit-'.uniqid();
     File::ensureDirectoryExists($tempDir);
 
-    File::put($tempDir . '/GhostModel.php', <<<'PHP'
+    File::put($tempDir.'/GhostModel.php', <<<'PHP'
 <?php
 
 namespace Tests\Tmp;
@@ -83,10 +83,10 @@ PHP);
 });
 
 it('skips php files with classes that are not eloquent models', function () {
-    $tempDir = sys_get_temp_dir() . '/privacy-audit-' . uniqid();
+    $tempDir = sys_get_temp_dir().'/privacy-audit-'.uniqid();
     File::ensureDirectoryExists($tempDir);
 
-    $filePath = $tempDir . '/PlainClass.php';
+    $filePath = $tempDir.'/PlainClass.php';
 
     File::put($filePath, <<<'PHP'
 <?php
@@ -110,7 +110,8 @@ PHP);
 });
 
 it('resolves a relative scan path against the base path', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicResolveScanPath(string $scanOption): ?string
         {
             return $this->resolveScanPath($scanOption);
@@ -123,7 +124,8 @@ it('resolves a relative scan path against the base path', function () {
 });
 
 it('uses src as default scan path when no scan option is given', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicResolveScanPath(string $scanOption): ?string
         {
             return $this->resolveScanPath($scanOption);
@@ -136,14 +138,16 @@ it('uses src as default scan path when no scan option is given', function () {
 });
 
 it('returns the pathname when getRealPath is not usable', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicResolveFilePath(object $file): ?string
         {
             return $this->resolveFilePath($file);
         }
     };
 
-    $file = new class {
+    $file = new class
+    {
         public function getRealPath(): string|false
         {
             return false;
@@ -159,14 +163,16 @@ it('returns the pathname when getRealPath is not usable', function () {
 });
 
 it('returns the string value when getPathname is not usable', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicResolveFilePath(object $file): ?string
         {
             return $this->resolveFilePath($file);
         }
     };
 
-    $file = new class {
+    $file = new class
+    {
         public function getRealPath(): string|false
         {
             return false;
@@ -187,28 +193,29 @@ it('returns the string value when getPathname is not usable', function () {
 });
 
 it('returns null when no file path can be resolved', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicResolveFilePath(object $file): ?string
         {
             return $this->resolveFilePath($file);
         }
     };
 
-    $file = new class {
-    };
+    $file = new class {};
 
     expect($command->publicResolveFilePath($file))->toBeNull();
 });
 
 it('returns null when the file cannot be read', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicGetClassNameFromFile(string $filePath): ?string
         {
             return $this->getClassNameFromFile($filePath);
         }
     };
 
-    $missingFile = sys_get_temp_dir() . '/does-not-exist-' . uniqid() . '.php';
+    $missingFile = sys_get_temp_dir().'/does-not-exist-'.uniqid().'.php';
 
     $previousHandler = set_error_handler(function (): bool {
         return true;
@@ -222,7 +229,8 @@ it('returns null when the file cannot be read', function () {
 });
 
 it('parses a namespace with namespace separators', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicParseNamespace(array $tokens, int $startIndex): string
         {
             return $this->parseNamespace($tokens, $startIndex);
@@ -241,7 +249,8 @@ it('parses a namespace with namespace separators', function () {
 });
 
 it('returns null when no class name token is found', function () {
-    $command = new class extends PrivacyAuditCommand {
+    $command = new class extends PrivacyAuditCommand
+    {
         public function publicParseClassName(array $tokens, int $startIndex): ?string
         {
             return $this->parseClassName($tokens, $startIndex);
