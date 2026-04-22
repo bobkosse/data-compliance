@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests;
 
-use \Orchestra\Testbench\TestCase as OTestCase;
-use \BobKosse\DataSecurity\DataSecurityServiceProvider;
+use BobKosse\DataSecurity\DataSecurityServiceProvider;
+use Orchestra\Testbench\TestCase as OTestCase;
 
 abstract class TestCase extends OTestCase
 {

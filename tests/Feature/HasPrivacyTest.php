@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+use BobKosse\DataSecurity\Exceptions\PrivacyDecryptionException;
+use BobKosse\DataSecurity\Traits\HasPrivacy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Crypt;
-use BobKosse\DataSecurity\Traits\HasPrivacy;
+use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
     Schema::create('test_customers', function (Blueprint $table) {
@@ -26,41 +28,44 @@ beforeEach(function () {
     });
 });
 
-class TestCustomer extends Model {
+class TestCustomer extends Model
+{
     use HasPrivacy;
 
     protected $table = 'test_customers';
 
     protected $fillable = [
-        'name', 'email', 'address', 'internal_note'
+        'name', 'email', 'address', 'internal_note',
     ];
 
     protected $privacyFields = [
-        'name', 'email', 'address'
+        'name', 'email', 'address',
     ];
 }
 
-class User extends Model {
+class User extends Model
+{
     use HasPrivacy;
 
     protected $table = 'users';
 
     protected $fillable = [
-        'username', 'email'
+        'username', 'email',
     ];
 
     protected $privacyFields = [
-        'username', 'email'
+        'username', 'email',
     ];
 }
 
-class NonModel {
+class NonModel
+{
     use HasPrivacy;
 
     public function __construct(public string $email) {}
 
     protected $privacyFields = [
-        'email'
+        'email',
     ];
 }
 
@@ -174,20 +179,236 @@ it('should log an alert if HasPrivacy is used on User model', function () {
         }));
 
     // Act
-    $model = new User();
+    $model = new User;
     $model->getAttribute('any_key');
 });
 
-it('returns the raw value when decryption fails', function () {
+it('encrypts sensitive data when using fill and save', function () {
+    $customer = new TestCustomer;
+    $customer->fill([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+    $customer->save();
+
+    $rawDbData = DB::table('test_customers')->where('id', $customer->id)->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using insert', function () {
+    TestCustomer::insert([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using upsert', function () {
+    TestCustomer::upsert([
+        [
+            'id' => 1,
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ], ['id'], ['name', 'email', 'address', 'internal_note', 'updated_at']);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('throws a PrivacyDecryptionException when decryption fails', function () {
     Crypt::shouldReceive('decryptString')
         ->once()
         ->andThrow(new Exception('Decrypt failed'));
 
-    $model = new TestCustomer();
+    $model = new TestCustomer;
     $model->setRawAttributes([
         'email' => 'encrypted-value',
     ]);
     $model->revealPrivacy(true);
 
-    expect($model->getAttribute('email'))->toBe('encrypted-value');
+    $model->getAttribute('email');
+})->throws(PrivacyDecryptionException::class);
+
+it('returns null for null privacy values without decrypting them', function () {
+    $model = new TestCustomer;
+
+    $model->setRawAttributes([
+        'email' => null,
+    ]);
+
+    expect($model->getAttribute('email'))->toBeNull();
+
+    $model->revealPrivacy(true);
+
+    expect($model->getAttribute('email'))->toBeNull();
+});
+it('encrypts sensitive data when using insert via the model builder', function () {
+    TestCustomer::insert([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using insertOrIgnore via the model builder', function () {
+    TestCustomer::insertOrIgnore([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using update via the model builder', function () {
+    $customer = TestCustomer::create([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+
+    TestCustomer::where('id', $customer->id)->update([
+        'name' => 'Jane Doe',
+        'email' => 'jane@doe.com',
+        'address' => '456 Another Street',
+    ]);
+
+    $rawDbData = DB::table('test_customers')->where('id', $customer->id)->first();
+
+    expect($rawDbData->name)->not->toBe('Jane Doe');
+    expect($rawDbData->email)->not->toBe('jane@doe.com');
+    expect($rawDbData->address)->not->toBe('456 Another Street');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts data when updating ALL records without a where clause', function () {
+    $customer = TestCustomer::create([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+
+    TestCustomer::where('id', 1)->update(['email' => 'new@all.com']);
+
+    $rawDbData = DB::table('test_customers')->pluck('email');
+
+    $rawDbData->each(fn ($email) => expect($email)->not->toBe('new@all.com'));
+});
+
+it('does not double-encrypt already encrypted data', function () {
+    $customer = TestCustomer::create([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+
+    $encryptedEmail = DB::table('test_customers')
+        ->where('id', 1)->value('email');
+
+    TestCustomer::where('id', 1)
+        ->update(['email' => $encryptedEmail]);
+
+    $freshRawData = DB::table('test_customers')
+        ->where('id', 1)->first();
+
+    expect($freshRawData->email)->toBe($encryptedEmail);
+});
+
+it('leaves non-private fields as plaintext during bulk update', function () {
+    $customer = TestCustomer::create([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+
+    TestCustomer::where('id', 1)->update(['internal_note' => 'Updated the note']);
+
+    $rawDbData = DB::table('test_customers')->where('id', $customer->id)->first();
+
+    expect($rawDbData->internal_note)->toBe('Updated the note');
+});
+
+it('handles mixed private and public fields correctly in one update', function () {
+    $customer = TestCustomer::create([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+
+    TestCustomer::where('id', 1)->update([
+        'internal_note' => 'Not a secret note',
+        'email' => 'b@b.com',
+    ]);
+
+    $rawDbData = DB::table('test_customers')->where('id', 1)->first();
+
+    expect($rawDbData->internal_note)->toBe('Not a secret note');
+    expect($rawDbData->email)->not->toBe('b@b.com');
+});
+
+it('keeps null privacy values as null without encrypting them', function () {
+    $customer = new TestCustomer;
+
+    $customer->setAttribute('email', '');
+
+    expect($customer->getRawOriginal('email'))->toBeNull();
+    expect($customer->getAttribute('email'))->toBe('[ENCRYPTED]');
+
+    $customer->revealPrivacy(true);
+
+    expect($customer->getAttribute('email'))->toBe('');
 });

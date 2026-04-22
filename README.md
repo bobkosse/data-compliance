@@ -1,21 +1,22 @@
 # Laravel Data Security (Privacy Trait & Audit)
-This package provides a lightweight solution for handling sensitive data within Laravel Eloquent models. It allows you 
-to automatically encrypt and decrypt specific fields and includes an audit tool to monitor privacy security across your 
-application.
+This package provides a lightweight solution for handling sensitive data within Laravel Eloquent models. It automatically encrypts specific fields, decrypts them only when explicitly requested, and includes an audit tool to inspect privacy coverage across your application.
 
 ## Features
-- **Automatic Encryption:** Automatically encrypts sensitive data when saving to the database.
-- **On-the-fly Decryption:** Decrypts data automatically when accessing model attributes.
-- **Privacy Masking:** By default, encrypted fields return ```[ENCRYPTED]``` unless explicitly "revealed."
-- **Privacy Audit:** A built-in CLI tool to scan your models and verify which fields are protected.
+- **Automatic field encryption:** Encrypts sensitive model attributes before they are stored in the database.
+- **Automatic field decryption:** Decrypts privacy fields only when privacy is explicitly revealed.
+- **Safe default masking:** Privacy fields return `[ENCRYPTED]` by default to prevent accidental data exposure.
+- **Bulk write support:** Works with model-based bulk operations such as `insert()`, `insertOrIgnore()`, `upsert()`, and `where()->update()`.
+- **Duplicate encryption protection:** Prevents already encrypted values from being encrypted again.
+- **Clear decryption errors:** Throws a `PrivacyDecryptionException` when encrypted values cannot be decrypted.
+- **Privacy audit command:** Scans your models and reports which ones use the privacy trait and which privacy fields they define.
 
 ## Installation
-1. Add the trait to your project (ensure it is placed in the ```BobKosse\DataSecurity\Traits``` namespace).
-2. Register the ```PrivacyAuditCommand``` in your ```app/Console/Kernel.php``` if not automatically discovered.
+1. Add the package to your project.
+2. Register the `PrivacyAuditCommand` in your console kernel if it is not auto-discovered.
 
 ## Usage
-### 1. Preparing your Models
-Add the ```HasPrivacy``` trait to any Eloquent model containing sensitive data. Define which fields should be encrypted by adding a ```$privacyFields``` array.
+### 1. Prepare your model
+Add the `HasPrivacy` trait to any Eloquent model containing sensitive data. Define the fields that should be protected using a `$privacyFields` array.
 
 ```php
 use BobKosse\DataSecurity\Traits\HasPrivacy;
@@ -34,11 +35,34 @@ class PatientProfile extends Model
 ```
 
 ### 2. How it works
-- **Saving Data:** When you set a value for a field defined in ```$privacyFields```, the trait automatically encrypts it using Laravel's ```Crypt``` facade before it hits the database.
-- **Accessing Data:** By default, accessing these fields will return the string ```[ENCRYPTED]```. This prevents accidental leaking of sensitive data in logs, API responses, or views.
-- **Revealing Data:** To access the actual decrypted value, you must explicitly call the revealPrivacy() method.
+
+#### Saving data
+When a value is assigned to a field listed in `$privacyFields`, the trait automatically encrypts it before it reaches the database.
+
+This works with:
+
+- `fill()`
+- `create()`
+- `save()`
+- `update()`
+- `forceFill()`
+
+It also supports bulk model operations:
+
+- `insert()`
+- `insertOrIgnore()`
+- `upsert()`
+- `where()->update()`
+
+#### Revealing data
+To access the decrypted value, explicitly reveal privacy first.
+
+#### Reading data
+By default, privacy fields return `[ENCRYPTED]` when accessed.
 
 ```php
+use BobKosse\DataSecurity\Exceptions\PrivacyDecryptionException;
+
 $profile = PatientProfile::find(1);
 
 // Returns "[ENCRYPTED]"
@@ -52,21 +76,41 @@ echo $profile->phone_number;
 This can also be used in combination with authorization policies to ensure sensitive data is only accessible by 
 authorized users.
 
+### 3. ```HasPrivacy``` works on all Laravel Eloquent models
+The trait is designed for Eloquent models and does not affect raw database queries.
+
+Supported Eloquent-based writes include:
+
+- `fill()`
+- `create()`
+- `save()`
+- `update()`
+- `forceFill()`
+- `insert()`
+- `insertOrIgnore()`
+- `upsert()`
+- `where()->update()`
+
 ## Privacy Audit Command
-The package includes a console command to give you an overview of your data security status. It scans a directory for 
-Eloquent models and reports which ones are using the privacy trait.
+
+The package includes a console command that scans a directory for Eloquent models and reports which ones use the privacy trait.
 
 ### Run the audit:
+
 ```bash
 php artisan privacy:audit app/Models
 ```
 
-### Output:
-The command will display a table showing:
-- **Model:** The full class name of the model.
-- **Has Privacy Trait:** A green "Yes" or red "No" indicating if the trait is implemented.
-- **Privacy Fields:** A list of the fields currently being encrypted.
+### Output
 
-## Important Notes
-- **User Model:** The trait contains a safety check (```isPrivacyActive```) that prevents it from running on the default ```User``` class to avoid locking users out of their accounts if email/password fields are accidentally encrypted.
-- **Database Requirements:** Ensure the database columns for privacy fields are large enough to hold encrypted strings (typically ```TEXT``` or ```BLOB```).
+The command shows:
+
+- **Model:** the full class name of the model
+- **Has Privacy Trait:** whether the trait is implemented
+- **Privacy Fields:** the fields currently configured for encryption
+
+## Important notes
+
+- **User model safety:** The trait intentionally avoids running on the default `User` model to prevent accidental locking out of authentication data.
+- **Database column size:** Ensure privacy columns can store encrypted strings, typically using `TEXT` or `BLOB`.
+- **Raw SQL is out of scope:** Direct `DB::table()` or raw SQL statements bypass the trait.
