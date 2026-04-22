@@ -43,22 +43,10 @@ class PrivacyEloquentBuilder extends Builder
     {
         $model = $this->getModel();
 
-        if (! method_exists($model, 'privacyFields')) {
-            return $values;
-        }
-
         foreach ($model->privacyFields() as $field) {
-            if (! array_key_exists($field, $values)) {
-                continue;
+            if (array_key_exists($field, $values) && $values[$field] !== null) {
+                $values[$field] = Crypt::encryptString((string) $values[$field]);
             }
-
-            $value = $values[$field];
-
-            if ($value === null) {
-                continue;
-            }
-
-            $values[$field] = Crypt::encryptString((string) $value);
         }
 
         return $values;

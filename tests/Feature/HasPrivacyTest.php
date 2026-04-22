@@ -275,3 +275,25 @@ it('encrypts sensitive data when using insert via the model builder', function (
     expect($rawDbData->address)->not->toBe('123 Road Avenue');
     expect($rawDbData->internal_note)->toBe('This is a secret note');
 });
+
+it('encrypts sensitive data when using insertOrIgnore via the model builder', function () {
+    TestCustomer::insertOrIgnore([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+
