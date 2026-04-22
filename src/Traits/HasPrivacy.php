@@ -4,49 +4,44 @@ declare(strict_types=1);
 
 namespace BobKosse\DataSecurity\Traits;
 
+use BobKosse\DataSecurity\Builders\PrivacyEloquentBuilder;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
 trait HasPrivacy
 {
+    /**
+     * Indicates whether privacy is revealed for the model.
+     */
     protected bool $revealed = false;
 
     /**
      * Boot method for HasPrivacy trait.
      */
-    protected function bootHasPrivacy(): void
+    protected static function bootHasPrivacy(): void
     {
-        static::saving(function ($model) {
-            $model->encryptPrivacyFields();
-        });
-
-        static::updating(function ($model) {
-            $model->encryptPrivacyFields();
-        });
+        // Intentionally left empty.
+        // Attribute encryption happens in setAttribute().
+        // Bulk operations are handled by the custom builder.
     }
 
     /**
-     * Encrypts privacy fields in the model.
+     * Use the privacy-aware Eloquent builder.
      */
-    protected function encryptPrivacyFields(): void
+    public function newEloquentBuilder($query): Builder
     {
-        $privateFields = $this->getPrivateFields();
-
-        foreach ($privateFields as $field) {
-            if ($this->isDirty($field)) {
-                $value = $this->getAttributes()[$field] ?? null;
-
-                if (! is_string($value) || ! str_starts_with($value, '[ENCRYPTED]')) {
-                    $this->attributes[$field] = $this->encryptValue($value);
-                }
-            }
-        }
+        return new PrivacyEloquentBuilder($query);
     }
 
+    /**
+     * Checks if privacy is active for the model.
+     */
     protected function isPrivacyActive(): bool
     {
         $privacyActive = $this instanceof Model && get_class($this) !== 'User';
+
         if (! $privacyActive) {
             Log::alert('Privacy is not active for this model');
         }
@@ -54,6 +49,9 @@ trait HasPrivacy
         return $privacyActive;
     }
 
+    /**
+     * Reveals or hides privacy fields for the model.
+     */
     public function revealPrivacy(bool $reveal = false): self
     {
         $this->revealed = $reveal;
@@ -61,21 +59,28 @@ trait HasPrivacy
         return $this;
     }
 
+    /**
+     * Retrieves the privacy fields for the model.
+     */
     public function privacyFields(): array
     {
         return $this->privacyFields ?? [];
     }
 
+    /**
+     * Retrieves the attribute value for the given key.
+     */
     public function getAttribute($key): mixed
     {
         $value = parent::getAttribute($key);
-        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields())) {
+
+        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
             if (! $this->revealed) {
                 return '[ENCRYPTED]';
             }
 
             try {
-                return Crypt::decryptString($value);
+                return Crypt::decryptString((string) $value);
             } catch (\Exception $e) {
                 return $value;
             }
@@ -84,10 +89,15 @@ trait HasPrivacy
         return $value;
     }
 
+    /**
+     * Sets the attribute value for the given key.
+     */
     public function setAttribute($key, $value): mixed
     {
-        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields ?? [])) {
-            $value = Crypt::encryptString($value);
+        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
+            if ($value !== null) {
+                $value = Crypt::encryptString((string) $value);
+            }
         }
 
         return parent::setAttribute($key, $value);

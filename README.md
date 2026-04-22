@@ -52,6 +52,19 @@ echo $profile->phone_number;
 This can also be used in combination with authorization policies to ensure sensitive data is only accessible by 
 authorized users.
 
+### 3. ```HasPrivacy``` works on all Laravel Eloquent models
+The trait is designed to work with any Eloquent model, but not on raw database queries. You can use this command with:
+- `fill()`
+- `create()`
+- `save()`
+- `update()`
+- `forceFill()`
+
+And with bulk executions:
+- `insert()`
+- `insertOrIgnore()`
+- `upsert()`
+
 ## Privacy Audit Command
 The package includes a console command to give you an overview of your data security status. It scans a directory for 
 Eloquent models and reports which ones are using the privacy trait.

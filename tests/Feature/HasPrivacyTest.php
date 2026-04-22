@@ -183,6 +183,65 @@ it('should log an alert if HasPrivacy is used on User model', function () {
     $model->getAttribute('any_key');
 });
 
+it('encrypts sensitive data when using fill and save', function () {
+    $customer = new TestCustomer;
+    $customer->fill([
+        'name' => 'John Doe',
+        'email' => 'john@doe.com',
+        'address' => '123 Road Avenue',
+        'internal_note' => 'This is a secret note',
+    ]);
+    $customer->save();
+
+    $rawDbData = DB::table('test_customers')->where('id', $customer->id)->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using insert', function () {
+    TestCustomer::insert([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
+it('encrypts sensitive data when using upsert', function () {
+    TestCustomer::upsert([
+        [
+            'id' => 1,
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ], ['id'], ['name', 'email', 'address', 'internal_note', 'updated_at']);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
+});
+
 it('returns the raw value when decryption fails', function () {
     Crypt::shouldReceive('decryptString')
         ->once()
@@ -195,4 +254,24 @@ it('returns the raw value when decryption fails', function () {
     $model->revealPrivacy(true);
 
     expect($model->getAttribute('email'))->toBe('encrypted-value');
+});
+
+it('encrypts sensitive data when using insert via the model builder', function () {
+    TestCustomer::insert([
+        [
+            'name' => 'John Doe',
+            'email' => 'john@doe.com',
+            'address' => '123 Road Avenue',
+            'internal_note' => 'This is a secret note',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ],
+    ]);
+
+    $rawDbData = DB::table('test_customers')->first();
+
+    expect($rawDbData->name)->not->toBe('John Doe');
+    expect($rawDbData->email)->not->toBe('john@doe.com');
+    expect($rawDbData->address)->not->toBe('123 Road Avenue');
+    expect($rawDbData->internal_note)->toBe('This is a secret note');
 });
