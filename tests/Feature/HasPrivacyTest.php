@@ -11,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 beforeEach(function () {
+    Schema::dropIfExists('test_customers');
+    Schema::dropIfExists('users');
+
     Schema::create('test_customers', function (Blueprint $table) {
         $table->id();
         $table->string('name');

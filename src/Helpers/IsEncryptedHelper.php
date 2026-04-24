@@ -1,15 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace BobKosse\DataSecurity\Helpers;
 
 use Illuminate\Support\Facades\Crypt;
+use BobKosse\DataSecurity\Builders\PrivacyEloquentBuilder;
 
-trait IsEncrypted
+class IsEncryptedHelper
 {
     /**
      * Check if the value is already encrypted.
      */
-    protected function isAlreadyEncrypted(mixed $value): bool
+    public function isAlreadyEncrypted(mixed $value): bool
     {
         if (! is_string($value) || $value === '') {
             return false;
@@ -27,14 +30,15 @@ trait IsEncrypted
     /**
      * Encrypt privacy fields in the given values array.
      *
+     * @param  PrivacyEloquentBuilder  $builder
      * @param  array<string, mixed>  $values
      * @return array<string, mixed>
      */
-    protected function encryptPrivacyPayload(array $values): array
+    public function encryptPrivacyPayload(PrivacyEloquentBuilder $builder, array $values): array
     {
-        $model = $this->getModel();
+        $model = $builder->getModel();
 
-        foreach ($model->privacyFields() as $field) {
+        foreach ($model->getPrivacyFields() as $field) {
             if (! array_key_exists($field, $values) || $values[$field] === null) {
                 continue;
             }
@@ -52,13 +56,14 @@ trait IsEncrypted
     /**
      * Encrypt privacy fields in the given values array.
      *
+     * @param  PrivacyEloquentBuilder  $builder
      * @param  array<int, array<string, mixed>>  $values
      * @return array<int, array<string, mixed>>
      */
-    protected function encryptPrivacyPayloads(array $values): array
+    public function encryptPrivacyPayloads(PrivacyEloquentBuilder $builder, array $values): array
     {
-        return array_map(function (array $row): array {
-            return $this->encryptPrivacyPayload($row);
+        return array_map(function (array $row) use ($builder): array {
+            return $this->encryptPrivacyPayload($builder, $row);
         }, $values);
     }
 }

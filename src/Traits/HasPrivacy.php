@@ -6,7 +6,7 @@ namespace BobKosse\DataSecurity\Traits;
 
 use BobKosse\DataSecurity\Builders\PrivacyEloquentBuilder;
 use BobKosse\DataSecurity\Exceptions\PrivacyDecryptionException;
-use BobKosse\DataSecurity\Helpers\IsEncrypted;
+use BobKosse\DataSecurity\Helpers\IsEncryptedHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Log;
 
 trait HasPrivacy
 {
-    use IsEncrypted;
+    protected function getIsEncryptedHelper(): IsEncryptedHelper
+    {
+        return app(IsEncryptedHelper::class);
+    }
 
     /**
      * Indicates whether privacy is revealed for the model.
@@ -36,7 +39,7 @@ trait HasPrivacy
      */
     public function newEloquentBuilder($query): Builder
     {
-        return new PrivacyEloquentBuilder($query);
+        return new PrivacyEloquentBuilder($query, $this->getIsEncryptedHelper());
     }
 
     /**
@@ -66,7 +69,7 @@ trait HasPrivacy
     /**
      * Retrieves the privacy fields for the model.
      */
-    public function privacyFields(): array
+    public function getPrivacyFields(): array
     {
         return $this->privacyFields ?? [];
     }
@@ -78,7 +81,7 @@ trait HasPrivacy
     {
         $value = parent::getAttribute($key);
 
-        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
+        if ($this->isPrivacyActive() && in_array($key, $this->getPrivacyFields(), true)) {
             if ($value === null) {
                 return null;
             }
@@ -102,8 +105,8 @@ trait HasPrivacy
      */
     public function setAttribute($key, $value): mixed
     {
-        if ($this->isPrivacyActive() && in_array($key, $this->privacyFields(), true)) {
-            if ($value !== null && ! $this->isAlreadyEncrypted($value)) {
+        if ($this->isPrivacyActive() && in_array($key, $this->getPrivacyFields(), true)) {
+            if ($value !== null && ! $this->getIsEncryptedHelper()->isAlreadyEncrypted($value)) {
                 $value = Crypt::encryptString((string) $value);
             }
         }

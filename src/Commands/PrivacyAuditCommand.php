@@ -13,7 +13,6 @@ use ReflectionClass;
 class PrivacyAuditCommand extends Command
 {
     protected $signature = 'privacy:audit {scan?}';
-
     protected $description = 'Overview of all Eloquent models and their privacy settings';
 
     public function handle(): int
@@ -69,7 +68,7 @@ class PrivacyAuditCommand extends Command
 
             if ($usesTrait && $reflection->isInstantiable()) {
                 $instance = $reflection->newInstanceWithoutConstructor();
-                $fields = implode(', ', $instance->privacyFields());
+                $fields = implode(', ', $instance->getPrivacyFields());
             }
 
             $rows[] = [

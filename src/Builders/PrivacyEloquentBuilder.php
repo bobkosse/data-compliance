@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BobKosse\DataSecurity\Builders;
 
-use BobKosse\DataSecurity\Helpers\IsEncrypted;
+use BobKosse\DataSecurity\Helpers\IsEncryptedHelper;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -12,14 +12,19 @@ use Illuminate\Database\Eloquent\Builder;
  */
 class PrivacyEloquentBuilder extends Builder
 {
-    use IsEncrypted;
+    private IsEncryptedHelper $isEncrypted;
+
+    public function __construct($query, IsEncryptedHelper $isEncrypted) {
+        $this->isEncrypted = $isEncrypted;
+        $this->query = $query;
+    }
 
     /**
      * Encrypts privacy payloads before inserting into the database.
      */
     public function insert(array $values): bool
     {
-        return parent::insert($this->encryptPrivacyPayloads($values));
+        return parent::insert($this->isEncrypted->encryptPrivacyPayloads($this, $values));
     }
 
     /**
@@ -27,7 +32,7 @@ class PrivacyEloquentBuilder extends Builder
      */
     public function insertOrIgnore(array $values): int
     {
-        return parent::insertOrIgnore($this->encryptPrivacyPayloads($values));
+        return parent::insertOrIgnore($this->isEncrypted->encryptPrivacyPayloads($this, $values));
     }
 
     /**
@@ -35,7 +40,7 @@ class PrivacyEloquentBuilder extends Builder
      */
     public function upsert(array $values, $uniqueBy, $update = null): int
     {
-        return parent::upsert($this->encryptPrivacyPayloads($values), $uniqueBy, $update);
+        return parent::upsert($this->isEncrypted->encryptPrivacyPayloads($this, $values), $uniqueBy, $update);
     }
 
     /**
@@ -43,6 +48,6 @@ class PrivacyEloquentBuilder extends Builder
      */
     public function update(array $values): int
     {
-        return parent::update($this->encryptPrivacyPayload($values));
+        return parent::update($this->isEncrypted->encryptPrivacyPayload($this, $values));
     }
 }
